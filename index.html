@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Nudge">
+<meta name="theme-color" content="#0F0F11">
+<title>Nudge</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0F0F11;
+  --surface: #1A1A1F;
+  --surface-2: #242429;
+  --surface-3: #2E2E35;
+  --border: rgba(255,255,255,0.07);
+  --border-2: rgba(255,255,255,0.12);
+  --accent: #F59E0B;
+  --accent-dim: rgba(245,158,11,0.12);
+  --accent-text: #FCD34D;
+  --text-1: #F0EFE8;
+  --text-2: #9B9A96;
+  --text-3: #555550;
+  --success: #34D399;
+  --success-dim: rgba(52,211,153,0.1);
+  --danger: #F87171;
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Shell ── */
+#app { display: flex; flex-direction: column; height: 100dvh; }
+
+header {
+  display: flex; align-items: center; padding: 0 14px;
+  height: 52px; flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.logo {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 18px; font-weight: 600; color: var(--text-1); letter-spacing: -0.02em;
+}
+.logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+header .spacer { flex: 1; }
+.hbtn {
+  width: 34px; height: 34px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border-2); background: var(--surface);
+  color: var(--text-2); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-family: inherit; transition: all 0.15s; margin-left: 6px;
+}
+.hbtn:hover { background: var(--surface-2); color: var(--text-1); }
+.hbtn svg { width: 16px; height: 16px; }
+
+/* Google auth pill */
+.g-pill {
+  font-size: 11px; font-weight: 600; padding: 4px 10px;
+  border-radius: 20px; cursor: pointer; margin-left: 6px;
+  border: 1px solid var(--border-2); background: none;
+  font-family: inherit; transition: all 0.15s; white-space: nowrap;
+  color: var(--text-3);
+}
+.g-pill:hover { background: var(--surface-2); color: var(--text-2); }
+.g-pill.connected  { color: var(--success); border-color: rgba(52,211,153,0.3); background: var(--success-dim); }
+.g-pill.needs-auth { color: var(--accent-text); border-color: var(--accent); background: var(--accent-dim); }
+.g-pill.error      { color: var(--danger); border-color: rgba(248,113,113,0.3); }
+.g-pill.syncing    { color: var(--text-2); }
+
+/* Sync spinner */
+@keyframes spin { to { transform: rotate(360deg); } }
+.hbtn.spinning svg { animation: spin 1s linear infinite; }
+
+/* File:// warning */
+#file-warn {
+  background: var(--accent-dim); border-bottom: 1px solid rgba(245,158,11,0.2);
+  padding: 7px 14px; font-size: 12px; color: var(--accent-text);
+  text-align: center; display: none; flex-shrink: 0;
+}
+#file-warn button {
+  background: none; border: none; color: var(--accent-text); cursor: pointer;
+  margin-left: 8px; font-size: 14px; line-height: 1;
+}
+
+/* ── Main layout ── */
+#main { display: flex; flex: 1; overflow: hidden; }
+
+/* ── List panel ── */
+#list-panel {
+  width: 340px; flex-shrink: 0;
+  display: flex; flex-direction: column;
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+}
+.stats-bar {
+  padding: 7px 14px 0;
+  display: flex; gap: 14px; flex-shrink: 0;
+}
+.stat { font-size: 11px; color: var(--text-3); }
+.stat b { color: var(--text-2); font-weight: 500; }
+.prog-strip { height: 2px; background: var(--border); margin: 7px 14px 0; flex-shrink: 0; border-radius: 1px; }
+.prog-fill { height: 100%; background: var(--accent); border-radius: 1px; transition: width 0.35s; }
+
+#list-scroll { flex: 1; overflow-y: auto; padding: 12px; }
+#list-scroll::-webkit-scrollbar { width: 4px; }
+#list-scroll::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+
+.section-card { margin-bottom: 14px; }
+.section-hrow {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 6px; border-radius: var(--radius-sm); margin-bottom: 3px;
+}
+.section-hrow:hover .sdel { opacity: 1; }
+.sec-title {
+  font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--text-3); flex: 1;
+}
+.sec-prog { font-size: 10px; color: var(--text-3); }
+.sdel {
+  opacity: 0; background: none; border: none; color: var(--text-3);
+  cursor: pointer; font-size: 15px; line-height: 1; padding: 1px 3px;
+  transition: opacity 0.15s, color 0.15s;
+}
+.sdel:hover { color: var(--danger); }
+
+.todo-item {
+  display: flex; align-items: flex-start; gap: 9px;
+  padding: 7px 8px; border-radius: var(--radius-sm);
+  margin-bottom: 1px; transition: background 0.1s;
+}
+.todo-item:hover { background: var(--surface); }
+.todo-item:hover .idel { opacity: 1; }
+
+.chk-wrap { padding-top: 2px; flex-shrink: 0; cursor: pointer; }
+.chk {
+  width: 17px; height: 17px; border-radius: 4px;
+  border: 1.5px solid var(--border-2);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; flex-shrink: 0;
+}
+.chk.on { background: var(--success); border-color: var(--success); }
+.chk svg { opacity: 0; transition: opacity 0.12s; }
+.chk.on svg { opacity: 1; }
+
+.itext {
+  flex: 1; font-size: 14px; color: var(--text-1);
+  cursor: pointer; padding-top: 0; line-height: 1.45;
+}
+.itext.done { text-decoration: line-through; color: var(--text-3); }
+.idel {
+  opacity: 0; background: none; border: none; color: var(--text-3);
+  cursor: pointer; font-size: 15px; padding: 0 3px;
+  transition: opacity 0.15s, color 0.15s; flex-shrink: 0;
+}
+.idel:hover { color: var(--danger); }
+
+.add-row {
+  display: flex; align-items: center; gap: 9px;
+  padding: 5px 8px; margin-top: 1px;
+}
+.add-chk-ph {
+  width: 17px; height: 17px; border-radius: 4px;
+  border: 1.5px dashed var(--border-2); flex-shrink: 0; opacity: 0.5;
+}
+.add-input {
+  flex: 1; background: none; border: none; outline: none;
+  font-size: 14px; color: var(--text-2); font-family: inherit; padding: 2px 0;
+}
+.add-input::placeholder { color: var(--text-3); }
+
+.add-sec-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 10px; border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-2); background: none;
+  color: var(--text-3); font-family: inherit; font-size: 13px;
+  cursor: pointer; width: 100%; transition: all 0.15s; margin-top: 4px;
+}
+.add-sec-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+.add-sec-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+/* ── Chat panel ── */
+#chat-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+#chat-msgs {
+  flex: 1; overflow-y: auto; padding: 16px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+#chat-msgs::-webkit-scrollbar { width: 4px; }
+#chat-msgs::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+
+.welcome {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; padding: 48px 20px 0; gap: 6px;
+}
+.welcome h3 { font-size: 16px; font-weight: 500; color: var(--text-2); }
+.welcome p { font-size: 13px; color: var(--text-3); line-height: 1.6; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 14px; }
+.chip {
+  padding: 5px 12px; border-radius: 20px;
+  border: 1px solid var(--border-2); background: var(--surface);
+  color: var(--text-2); font-size: 12px; cursor: pointer;
+  font-family: inherit; transition: all 0.15s;
+}
+.chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+.msg { max-width: 82%; display: flex; flex-direction: column; gap: 3px; }
+.msg.u { align-self: flex-end; align-items: flex-end; }
+.msg.a { align-self: flex-start; align-items: flex-start; }
+.bubble {
+  padding: 10px 14px; border-radius: 14px;
+  font-size: 14px; line-height: 1.6; word-break: break-word;
+  white-space: pre-wrap;
+}
+.msg.u .bubble { background: var(--accent); color: #1a1200; border-bottom-right-radius: 3px; }
+.msg.a .bubble { background: var(--surface-2); color: var(--text-1); border-bottom-left-radius: 3px; }
+.bubble.loading { color: var(--text-3); font-style: italic; }
+.mtime { font-size: 11px; color: var(--text-3); }
+
+#chat-foot {
+  padding: 10px 14px 12px; border-top: 1px solid var(--border);
+  display: flex; align-items: flex-end; gap: 8px;
+}
+#chat-in {
+  flex: 1; background: var(--surface); border: 1px solid var(--border-2);
+  border-radius: 12px; padding: 10px 14px; color: var(--text-1);
+  font-family: inherit; font-size: 14px; resize: none; outline: none;
+  min-height: 42px; max-height: 120px; line-height: 1.45;
+  transition: border-color 0.15s;
+}
+#chat-in:focus { border-color: rgba(245,158,11,0.5); }
+#chat-in::placeholder { color: var(--text-3); }
+#send {
+  width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
+  background: var(--accent); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: #1a1200; transition: all 0.15s;
+}
+#send:hover { background: var(--accent-text); transform: scale(1.04); }
+#send:disabled { background: var(--surface-2); color: var(--text-3); cursor: not-allowed; transform: none; }
+#send svg { width: 17px; height: 17px; }
+
+/* Memory button */
+#btn-mem {
+  width: 34px; height: 34px; border-radius: var(--radius-sm); flex-shrink: 0;
+  border: 1px solid var(--border-2); background: var(--surface);
+  color: var(--text-3); cursor: pointer;
+  display: none; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+#btn-mem:hover { background: var(--surface-2); color: var(--text-2); }
+#btn-mem.active { display: flex; }
+#btn-mem.has-memory { color: var(--accent); border-color: rgba(245,158,11,0.3); }
+#btn-mem svg { width: 15px; height: 15px; }
+
+/* ── Modals ── */
+.modal-bg {
+  display: none; position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.72); backdrop-filter: blur(6px);
+  align-items: center; justify-content: center; padding: 16px;
+}
+.modal-bg.open { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border-2);
+  border-radius: 16px; padding: 24px; width: 100%; max-width: 440px;
+  max-height: calc(100dvh - 32px); overflow-y: auto;
+}
+.modal::-webkit-scrollbar { width: 4px; }
+.modal::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+.modal h2 { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+.modal > p { font-size: 13px; color: var(--text-2); margin-bottom: 18px; line-height: 1.6; }
+.flabel { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); margin-bottom: 6px; }
+.finput {
+  width: 100%; background: var(--surface-2); border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm); padding: 10px 12px;
+  color: var(--text-1); font-family: inherit; font-size: 14px;
+  outline: none; transition: border-color 0.15s;
+}
+.finput:focus { border-color: rgba(245,158,11,0.5); }
+.mactions { display: flex; gap: 8px; margin-top: 18px; justify-content: flex-end; }
+.btn {
+  padding: 8px 16px; border-radius: var(--radius-sm);
+  font-family: inherit; font-size: 14px; font-weight: 500;
+  cursor: pointer; border: 1px solid var(--border-2); transition: all 0.15s;
+}
+.btn-ghost { background: none; color: var(--text-2); }
+.btn-ghost:hover { background: var(--surface-2); }
+.btn-primary { background: var(--accent); color: #1a1200; border-color: var(--accent); }
+.btn-primary:hover { background: var(--accent-text); }
+
+.key-hint {
+  font-size: 11px; color: var(--text-3); margin-top: 6px; margin-bottom: 2px;
+  display: flex; align-items: center; gap: 4px; line-height: 1.5;
+}
+.key-hint a, .settings-note a { color: var(--accent); text-decoration: none; }
+.key-hint a:hover, .settings-note a:hover { text-decoration: underline; }
+
+/* Settings Google section */
+.settings-divider { height: 1px; background: var(--border); margin: 20px 0; }
+.settings-section-label {
+  font-size: 13px; font-weight: 600; color: var(--text-2); margin-bottom: 6px;
+}
+.settings-note {
+  font-size: 12px; color: var(--text-3); line-height: 1.6; margin-bottom: 14px;
+}
+.mt10 { margin-top: 10px; }
+
+/* ── Mobile tabs ── */
+#tabs { display: none; }
+
+@media (max-width: 660px) {
+  #list-panel { width: 100%; border-right: none; display: none; }
+  #list-panel.show { display: flex; }
+  #chat-panel { display: none; }
+  #chat-panel.show { display: flex; }
+  #tabs {
+    display: flex; height: 56px;
+    border-top: 1px solid var(--border); flex-shrink: 0; background: var(--bg);
+  }
+  .tab {
+    flex: 1; background: none; border: none; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; color: var(--text-3); font-family: inherit;
+    font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em;
+    transition: color 0.15s;
+  }
+  .tab.on { color: var(--accent); }
+  .tab svg { width: 21px; height: 21px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <div class="logo-dot"></div>
+      Nudge
+    </div>
+    <div class="spacer"></div>
+    <button class="g-pill" id="btn-gpill" style="display:none" title="Google sync">
+      Google
+    </button>
+    <button class="hbtn" id="btn-sync" style="display:none" title="Sync now">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 8A6 6 0 112 8"/><path d="M14 4v4h-4"/>
+      </svg>
+    </button>
+    <button class="hbtn" id="btn-add-sec" title="Add section">
+      <svg viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+    <button class="hbtn" id="btn-settings" title="Settings">
+      <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M2.93 2.93l1.41 1.41M11.66 11.66l1.41 1.41M2.93 13.07l1.41-1.41M11.66 4.34l1.41-1.41" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </button>
+  </header>
+
+  <!-- file:// protocol warning -->
+  <div id="file-warn">
+    Google OAuth requires HTTP/S — not available over file://. Serve this file from a local or remote server to use Google sync.
+    <button onclick="this.parentElement.style.display='none'">×</button>
+  </div>
+
+  <!-- Main -->
+  <div id="main">
+
+    <!-- List panel -->
+    <div id="list-panel" class="show">
+      <div class="stats-bar">
+        <div class="stat">Total <b id="st-tot">0</b></div>
+        <div class="stat">Done <b id="st-done">0</b></div>
+        <div class="stat">Left <b id="st-left">0</b></div>
+      </div>
+      <div class="prog-strip"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+      <div id="list-scroll">
+        <div id="secs"></div>
+        <button class="add-sec-btn" id="btn-add-sec2">
+          <svg viewBox="0 0 13 13" fill="none"><path d="M6.5 1v11M1 6.5h11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Add section
+        </button>
+      </div>
+    </div>
+
+    <!-- Chat panel -->
+    <div id="chat-panel">
+      <div id="chat-msgs">
+        <div class="welcome" id="welcome">
+          <h3>Your list, your assistant</h3>
+          <p>I can see everything on your checklist.<br>Ask me to prioritize, plan, or just think out loud.</p>
+          <div class="chips" id="chips"></div>
+        </div>
+      </div>
+      <div id="chat-foot">
+        <textarea id="chat-in" placeholder="Ask anything about your list..." rows="1"></textarea>
+        <button id="btn-mem" title="Update memory from this conversation">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="8" cy="7" r="4"/>
+            <path d="M5.5 11.5c.5 1.5 5 1.5 5 0"/>
+            <path d="M8 11v3"/>
+          </svg>
+        </button>
+        <button id="send" disabled>
+          <svg viewBox="0 0 18 18" fill="none"><path d="M2.5 9L15.5 2.5 9.5 15.5V9H2.5z" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Mobile tab bar -->
+  <div id="tabs">
+    <button class="tab on" id="tab-list" onclick="goTab('list')">
+      <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+        <path d="M8 6h10M8 11h10M8 16h10M4 6h.01M4 11h.01M4 16h.01"/>
+      </svg>
+      List
+    </button>
+    <button class="tab" id="tab-chat" onclick="goTab('chat')">
+      <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 14a2 2 0 01-2 2H6l-4 4V4a2 2 0 012-2h14a2 2 0 012 2v10z"/>
+      </svg>
+      Chat
+    </button>
+  </div>
+
+</div>
+
+<!-- Settings modal -->
+<div class="modal-bg" id="modal-settings">
+  <div class="modal">
+    <h2>Settings</h2>
+    <p>Your API keys are stored locally on this device and sent directly to the respective APIs.</p>
+
+    <div class="flabel">Anthropic API Key</div>
+    <input class="finput" type="password" id="in-key" placeholder="sk-ant-api03-...">
+    <div class="key-hint">
+      Get a key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
+    </div>
+
+    <div class="settings-divider"></div>
+    <div class="settings-section-label">Google Integration</div>
+    <p class="settings-note">
+      Syncs your list across devices via Google Sheets and gives Claude persistent memory via Google Docs.
+      Requires this page to be served over HTTP/S — not <code>file://</code>.<br><br>
+      Setup: create a project at <a href="https://console.cloud.google.com" target="_blank">Google Cloud Console</a>,
+      enable the Sheets API and Docs API, create an OAuth 2.0 Web Client ID, and add this page's origin
+      to <em>Authorized JavaScript origins</em>.
+    </p>
+
+    <div class="flabel">Google Client ID</div>
+    <input class="finput" type="text" id="in-gclientid" placeholder="123456789-abc.apps.googleusercontent.com">
+    <div class="key-hint">Cloud Console &rarr; APIs &amp; Services &rarr; Credentials &rarr; OAuth 2.0 Client IDs</div>
+
+    <div class="flabel mt10">Google Sheet ID</div>
+    <input class="finput" type="text" id="in-sheetid" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms">
+    <div class="key-hint">From your Sheet URL: /spreadsheets/d/<b>THIS_PART</b>/edit</div>
+
+    <div class="flabel mt10">Google Doc ID (AI Memory)</div>
+    <input class="finput" type="text" id="in-docid" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms">
+    <div class="key-hint">From your Doc URL: /document/d/<b>THIS_PART</b>/edit</div>
+
+    <div class="mactions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-settings')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- New section modal -->
+<div class="modal-bg" id="modal-sec">
+  <div class="modal">
+    <h2>New section</h2>
+    <p>Sections keep your list organized. Name it after a project, time period, or category.</p>
+    <div class="flabel">Name</div>
+    <input class="finput" type="text" id="in-sec" placeholder="e.g. Easter Sunday">
+    <div class="mactions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-sec')">Cancel</button>
+      <button class="btn btn-primary" onclick="doAddSec()">Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State & storage ──────────────────────────────────────────────────────────
+let S = { sections: [], apiKey: '', googleClientId: '', googleSheetId: '', googleDocId: '' };
+let history = [];
+let busy = false;
+
+// ── Google runtime state (never persisted) ───────────────────────────────────
+const G = {
+  token: null,        // { access_token, expires_at }
+  tokenClient: null,  // GIS TokenClient
+  memory: '',         // current Doc content
+  memMsgCount: 0,     // messages since last memory write
+  sheetsTimer: null,  // debounce timer for Sheets writes
+};
+
+function save() {
+  localStorage.setItem('nudge2', JSON.stringify(S));
+  scheduleSheetsWrite();
+}
+
+function load() {
+  try { const r = localStorage.getItem('nudge2'); if (r) S = JSON.parse(r); } catch(e) {}
+  S.sections       = S.sections       || [];
+  S.apiKey         = S.apiKey         || '';
+  S.googleClientId = S.googleClientId || '';
+  S.googleSheetId  = S.googleSheetId  || '';
+  S.googleDocId    = S.googleDocId    || '';
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function ts() {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+// ── Google Identity Services (GIS) ───────────────────────────────────────────
+function onGisLoaded() {
+  if (S.googleClientId) initTokenClient();
+}
+
+function onGisError() {
+  console.warn('GIS library failed to load — Google features unavailable');
+  setGoogleUI('error');
+}
+
+function initTokenClient() {
+  if (!S.googleClientId) return;
+  if (typeof google === 'undefined' || !google.accounts?.oauth2) return;
+  try {
+    G.tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: S.googleClientId,
+      scope: [
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/documents',
+      ].join(' '),
+      callback: onTokenResponse,
+      error_callback: onTokenError,
+    });
+    setGoogleUI('ready');
+  } catch(e) {
+    console.error('GIS init failed:', e);
+    setGoogleUI('error');
+  }
+}
+
+function onTokenResponse(resp) {
+  if (resp.error) { onTokenError(resp); return; }
+  G.token = {
+    access_token: resp.access_token,
+    expires_at: Date.now() + (resp.expires_in * 1000),
+  };
+  setGoogleUI('connected');
+  // Load data from Google now that we have a token
+  if (S.googleSheetId) loadFromSheets();
+  if (S.googleDocId)   loadDocMemory();
+}
+
+function onTokenError(err) {
+  G.token = null;
+  const type = err?.type || '';
+  if (type === 'popup_closed') { setGoogleUI('ready'); return; }
+  setGoogleUI('needs-auth');
+  console.warn('Token error:', type);
+}
+
+function hasToken() {
+  return G.token && Date.now() < G.token.expires_at - 30000;
+}
+
+// Called from user gesture (header pill / sync button clicks)
+function connectGoogle() {
+  if (!S.googleClientId) { openModal('modal-settings'); return; }
+  if (!G.tokenClient) {
+    // GIS might not have loaded yet — try init then retry
+    if (typeof google !== 'undefined' && google.accounts?.oauth2) {
+      initTokenClient();
+    }
+    if (!G.tokenClient) {
+      // Still not available — could be network issue
+      setGoogleUI('error');
+      return;
+    }
+  }
+  setGoogleUI('syncing');
+  G.tokenClient.requestAccessToken({ prompt: '' });
+}
+
+// ── Google API helper ─────────────────────────────────────────────────────────
+async function gFetch(url, opts = {}) {
+  if (!hasToken()) {
+    setGoogleUI('needs-auth');
+    throw new Error('no_token');
+  }
+  const headers = {
+    'Authorization': `Bearer ${G.token.access_token}`,
+    'Content-Type': 'application/json',
+    ...(opts.headers || {}),
+  };
+  const res = await fetch(url, { ...opts, headers });
+  if (res.status === 401) {
+    G.token = null;
+    setGoogleUI('needs-auth');
+    throw new Error('token_expired');
+  }
+  return res;
+}
+
+// ── Google Sheets ─────────────────────────────────────────────────────────────
+// Sheet format (no header row):
+//   SECTION | Work        |
+//   ITEM    | Task text   | FALSE
+//   ITEM    | Done task   | TRUE
+
+function parseSheetRows(rows) {
+  const sections = [];
+  let cur = null;
+  for (const row of (rows || [])) {
+    const type = (row[0] || '').toUpperCase();
+    if (type === 'SECTION' && row[1]) {
+      cur = { id: uid(), title: row[1], items: [] };
+      sections.push(cur);
+    } else if (type === 'ITEM' && cur && row[1]) {
+      cur.items.push({
+        id: uid(),
+        text: row[1],
+        done: (row[2] || '').toUpperCase() === 'TRUE',
+      });
+    }
+  }
+  return sections;
+}
+
+function buildSheetRows() {
+  const rows = [];
+  for (const sec of S.sections) {
+    rows.push(['SECTION', sec.title, '']);
+    for (const item of sec.items) {
+      rows.push(['ITEM', item.text, item.done ? 'TRUE' : 'FALSE']);
+    }
+  }
+  return rows;
+}
+
+async function loadFromSheets() {
+  if (!hasToken() || !S.googleSheetId) return;
+  setSyncSpinner(true);
+  try {
+    const res = await gFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${S.googleSheetId}/values/Sheet1`
+    );
+    if (!res.ok) throw new Error(`Sheets ${res.status}`);
+    const data = await res.json();
+    const rows = data.values || [];
+    if (rows.length > 0) {
+      S.sections = parseSheetRows(rows);
+      localStorage.setItem('nudge2', JSON.stringify(S));
+      render();
+    } else {
+      // Sheet is empty — push local data up
+      await doWriteSheets();
+    }
+    setSyncSpinner(false);
+    setGoogleUI('connected');
+  } catch(e) {
+    setSyncSpinner(false);
+    if (e.message !== 'no_token' && e.message !== 'token_expired') {
+      setGoogleUI('error');
+      console.error('Sheets load failed:', e);
+    }
+  }
+}
+
+async function doWriteSheets() {
+  const base = `https://sheets.googleapis.com/v4/spreadsheets/${S.googleSheetId}`;
+  // Clear
+  const clearRes = await gFetch(`${base}/values/Sheet1:clear`, {
+    method: 'POST', body: '{}',
+  });
+  if (!clearRes.ok) throw new Error(`Clear ${clearRes.status}`);
+  // Write
+  const rows = buildSheetRows();
+  if (!rows.length) return;
+  const writeRes = await gFetch(`${base}/values/Sheet1?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ range: 'Sheet1', majorDimension: 'ROWS', values: rows }),
+  });
+  if (!writeRes.ok) throw new Error(`Write ${writeRes.status}`);
+}
+
+function scheduleSheetsWrite() {
+  if (!hasToken() || !S.googleSheetId) return;
+  clearTimeout(G.sheetsTimer);
+  G.sheetsTimer = setTimeout(async () => {
+    setSyncSpinner(true);
+    try {
+      await doWriteSheets();
+      setSyncSpinner(false);
+      setGoogleUI('connected');
+    } catch(e) {
+      setSyncSpinner(false);
+      if (e.message !== 'no_token' && e.message !== 'token_expired') {
+        setGoogleUI('error');
+        console.error('Sheets write failed:', e);
+      }
+    }
+  }, 2000);
+}
+
+// ── Google Docs (memory) ──────────────────────────────────────────────────────
+function extractDocText(doc) {
+  const parts = [];
+  for (const elem of (doc.body?.content || [])) {
+    if (!elem.paragraph) continue;
+    for (const pe of (elem.paragraph.elements || [])) {
+      if (pe.textRun?.content) parts.push(pe.textRun.content);
+    }
+  }
+  return parts.join('').trim();
+}
+
+async function loadDocMemory() {
+  if (!hasToken() || !S.googleDocId) return;
+  try {
+    const res = await gFetch(`https://docs.googleapis.com/v1/documents/${S.googleDocId}`);
+    if (!res.ok) throw new Error(`Docs ${res.status}`);
+    const doc = await res.json();
+    G.memory = extractDocText(doc);
+    updateMemoryBtn();
+  } catch(e) {
+    if (e.message !== 'no_token' && e.message !== 'token_expired') {
+      console.warn('Doc memory load failed:', e.message);
+    }
+  }
+}
+
+async function writeDocMemory(newText) {
+  if (!hasToken() || !S.googleDocId) return;
+  try {
+    // Read current doc to get endIndex
+    const readRes = await gFetch(`https://docs.googleapis.com/v1/documents/${S.googleDocId}`);
+    if (!readRes.ok) throw new Error(`Docs read ${readRes.status}`);
+    const doc = await readRes.json();
+    const content = doc.body?.content || [];
+    const endIndex = content.at(-1)?.endIndex ?? 1;
+
+    const requests = [];
+    // Delete all existing content (except mandatory trailing newline at endIndex)
+    if (endIndex > 1) {
+      requests.push({
+        deleteContentRange: { range: { startIndex: 1, endIndex: endIndex - 1 } }
+      });
+    }
+    // Insert new content at start
+    if (newText) {
+      requests.push({ insertText: { location: { index: 1 }, text: newText } });
+    }
+
+    if (!requests.length) return;
+
+    const writeRes = await gFetch(
+      `https://docs.googleapis.com/v1/documents/${S.googleDocId}:batchUpdate`,
+      { method: 'POST', body: JSON.stringify({ requests }) }
+    );
+    if (!writeRes.ok) throw new Error(`Docs write ${writeRes.status}`);
+    G.memory = newText;
+    updateMemoryBtn();
+  } catch(e) {
+    console.warn('Doc memory write failed:', e.message);
+  }
+}
+
+async function triggerMemoryUpdate() {
+  if (!S.apiKey) { openModal('modal-settings'); return; }
+  if (!S.googleDocId) {
+    openModal('modal-settings');
+    return;
+  }
+
+  const convLines = history.slice(-20).map(m =>
+    `${m.role === 'user' ? 'User' : 'Claude'}: ${m.content}`
+  ).join('\n\n');
+
+  const prompt = `You maintain a persistent memory file for a personal assistant app called Nudge.
+
+CURRENT MEMORY:
+${G.memory || '(empty — no memory recorded yet)'}
+
+RECENT CONVERSATION:
+${convLines || '(no conversation in this session)'}
+
+CURRENT CHECKLIST:
+${buildListCtx()}
+
+Produce an UPDATED MEMORY FILE that captures durable personal context: who the user is, their recurring tasks and projects, preferences, life context, and any important details from this conversation worth remembering.
+
+Rules:
+- Maximum 400 words
+- Plain text only — no markdown, no headers
+- Write in second person: "You are...", "The user prefers..."
+- Do NOT transcribe the conversation — only extract facts worth remembering long-term
+- If nothing notable was revealed, return the current memory unchanged
+
+Output only the memory file content, nothing else.`;
+
+  const memBtn = document.getElementById('btn-mem');
+  if (memBtn) { memBtn.style.opacity = '0.5'; memBtn.style.pointerEvents = 'none'; }
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': S.apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        messages: [{ role: 'user', content: prompt }],
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const newMemory = data.content?.[0]?.text?.trim() || '';
+      if (newMemory) {
+        await writeDocMemory(newMemory);
+        G.memMsgCount = 0;
+        // Brief visual confirmation on button
+        if (memBtn) {
+          const prev = memBtn.style.color;
+          memBtn.style.color = 'var(--success)';
+          setTimeout(() => { memBtn.style.color = prev || ''; }, 2000);
+        }
+      }
+    }
+  } catch(e) {
+    console.warn('Memory update failed:', e.message);
+  } finally {
+    if (memBtn) { memBtn.style.opacity = ''; memBtn.style.pointerEvents = ''; }
+  }
+}
+
+// ── Google UI state ───────────────────────────────────────────────────────────
+function setGoogleUI(state) {
+  const pill   = document.getElementById('btn-gpill');
+  const syncBtn = document.getElementById('btn-sync');
+  if (!pill) return;
+
+  const show = !!S.googleClientId;
+  pill.style.display = show ? '' : 'none';
+
+  const labels = {
+    ready:       'Connect Google',
+    connected:   'Google',
+    syncing:     'Syncing…',
+    'needs-auth': 'Reconnect',
+    error:       'Google Error',
+  };
+  pill.textContent = labels[state] || 'Google';
+  pill.className   = `g-pill ${state}`;
+
+  // Show sync button only when connected
+  const showSync = state === 'connected' || state === 'syncing';
+  syncBtn.style.display = showSync ? '' : 'none';
+}
+
+function setSyncSpinner(on) {
+  const syncBtn = document.getElementById('btn-sync');
+  if (!syncBtn) return;
+  syncBtn.classList.toggle('spinning', on);
+}
+
+function updateMemoryBtn() {
+  const btn = document.getElementById('btn-mem');
+  if (!btn) return;
+  const show = !!S.googleDocId;
+  btn.classList.toggle('active', show);
+  btn.classList.toggle('has-memory', show && !!G.memory);
+}
+
+// ── List context for Claude ───────────────────────────────────────────────────
+function buildListCtx() {
+  if (!S.sections.length) return 'The checklist is empty.';
+  const lines = ['Current checklist:'];
+  let tot = 0, done = 0;
+  for (const sec of S.sections) {
+    lines.push(`\n[${sec.title}]`);
+    if (!sec.items.length) { lines.push('  (no items)'); continue; }
+    for (const item of sec.items) {
+      lines.push(`  ${item.done ? '✓' : '○'} ${item.text}`);
+      tot++; if (item.done) done++;
+    }
+  }
+  lines.push(`\nOverall: ${done}/${tot} complete.`);
+  return lines.join('\n');
+}
+
+// ── Render list ───────────────────────────────────────────────────────────────
+function render() {
+  const el = document.getElementById('secs');
+  el.innerHTML = '';
+  for (const sec of S.sections) {
+    const done = sec.items.filter(i => i.done).length;
+    const d = document.createElement('div');
+    d.className = 'section-card';
+    d.innerHTML = `
+      <div class="section-hrow">
+        <span class="sec-title">${esc(sec.title)}</span>
+        <span class="sec-prog">${done}/${sec.items.length}</span>
+        <button class="sdel" onclick="delSec('${sec.id}')" title="Delete section">×</button>
+      </div>
+      <div id="items-${sec.id}">${sec.items.map(renderItem).join('')}</div>
+      <div class="add-row">
+        <div class="add-chk-ph"></div>
+        <input class="add-input" placeholder="Add item…" data-sec="${sec.id}"
+          onkeydown="if(event.key==='Enter'&&this.value.trim()){addItem('${sec.id}',this.value);this.value=''}">
+      </div>`;
+    el.appendChild(d);
+  }
+  updateStats();
+}
+
+function renderItem(item) {
+  return `<div class="todo-item">
+    <div class="chk-wrap" onclick="toggle('${item.id}')">
+      <div class="chk ${item.done?'on':''}">
+        <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+          <path d="M1 3.5l2.5 2.5 4.5-5" stroke="#0F0F11" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+    <span class="itext ${item.done?'done':''}" onclick="toggle('${item.id}')">${esc(item.text)}</span>
+    <button class="idel" onclick="delItem('${item.id}')">×</button>
+  </div>`;
+}
+
+function updateStats() {
+  const all = S.sections.flatMap(s => s.items);
+  const done = all.filter(i => i.done).length;
+  const tot = all.length;
+  document.getElementById('st-tot').textContent = tot;
+  document.getElementById('st-done').textContent = done;
+  document.getElementById('st-left').textContent = tot - done;
+  document.getElementById('prog').style.width = (tot ? Math.round(done/tot*100) : 0) + '%';
+}
+
+// ── List actions ──────────────────────────────────────────────────────────────
+function addSec(title) {
+  if (!title.trim()) return;
+  S.sections.push({ id: uid(), title: title.trim(), items: [] });
+  save(); render();
+}
+
+function delSec(id) {
+  if (!confirm('Delete this section and all its items?')) return;
+  S.sections = S.sections.filter(s => s.id !== id);
+  save(); render();
+}
+
+function addItem(secId, text) {
+  const sec = S.sections.find(s => s.id === secId);
+  if (!sec || !text.trim()) return;
+  sec.items.push({ id: uid(), text: text.trim(), done: false });
+  save(); render();
+}
+
+function toggle(itemId) {
+  for (const sec of S.sections) {
+    const item = sec.items.find(i => i.id === itemId);
+    if (item) { item.done = !item.done; save(); render(); return; }
+  }
+}
+
+function delItem(itemId) {
+  for (const sec of S.sections) {
+    const idx = sec.items.findIndex(i => i.id === itemId);
+    if (idx !== -1) { sec.items.splice(idx, 1); save(); render(); return; }
+  }
+}
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
+function addBubble(role, text, isLoading) {
+  const w = document.getElementById('welcome');
+  if (w) w.remove();
+  const msgs = document.getElementById('chat-msgs');
+  const d = document.createElement('div');
+  d.className = `msg ${role === 'user' ? 'u' : 'a'}`;
+  d.innerHTML = `<div class="bubble ${isLoading ? 'loading' : ''}">${role === 'user' ? esc(text) : text}</div><div class="mtime">${ts()}</div>`;
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
+  return d.querySelector('.bubble');
+}
+
+async function send() {
+  const inp = document.getElementById('chat-in');
+  const text = inp.value.trim();
+  if (!text || busy) return;
+
+  if (!S.apiKey) {
+    openModal('modal-settings');
+    document.getElementById('in-key').focus();
+    return;
+  }
+
+  inp.value = ''; inp.style.height = '';
+  busy = true;
+  document.getElementById('send').disabled = true;
+
+  addBubble('user', text);
+  history.push({ role: 'user', content: text });
+
+  const bubble = addBubble('assistant', 'Thinking…', true);
+
+  const memSection = G.memory
+    ? `\n\nContext about this user (your persistent memory):\n${G.memory}`
+    : '';
+
+  const sys = `You are a helpful assistant built into a smart checklist app called Nudge. You have full visibility into the user's current checklist. Be concise, warm, and practical — like a thoughtful friend who's also organized. Use the list context to give relevant, specific advice. Don't restate the whole list unless asked.${memSection}\n\n${buildListCtx()}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': S.apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        system: sys,
+        messages: history,
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || '(empty response)';
+    bubble.textContent = reply;
+    bubble.classList.remove('loading');
+    history.push({ role: 'assistant', content: reply });
+
+    // Auto-trigger memory update every 10 assistant messages
+    G.memMsgCount++;
+    if (G.memMsgCount >= 10 && S.googleDocId && hasToken()) {
+      triggerMemoryUpdate();
+    }
+
+  } catch(err) {
+    bubble.textContent = `Error: ${err.message}`;
+    bubble.classList.remove('loading');
+    bubble.style.color = 'var(--danger)';
+    history.pop();
+  }
+
+  busy = false;
+  document.getElementById('send').disabled = !document.getElementById('chat-in').value.trim();
+}
+
+// ── Modals ────────────────────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function saveSettings() {
+  const prevClientId = S.googleClientId;
+  S.apiKey         = document.getElementById('in-key').value.trim();
+  S.googleClientId = document.getElementById('in-gclientid').value.trim();
+  S.googleSheetId  = document.getElementById('in-sheetid').value.trim();
+  S.googleDocId    = document.getElementById('in-docid').value.trim();
+  localStorage.setItem('nudge2', JSON.stringify(S));
+  closeModal('modal-settings');
+
+  // Re-init GIS if client ID changed or was just set
+  if (S.googleClientId !== prevClientId) {
+    G.tokenClient = null;
+    G.token = null;
+  }
+  if (S.googleClientId && typeof google !== 'undefined' && google.accounts?.oauth2) {
+    initTokenClient();
+  }
+
+  setGoogleUI(G.tokenClient ? 'ready' : (S.googleClientId ? 'ready' : ''));
+  updateMemoryBtn();
+
+  // Show file:// warning if needed
+  if (location.protocol === 'file:' && S.googleClientId) {
+    document.getElementById('file-warn').style.display = '';
+  }
+}
+
+function doAddSec() {
+  const v = document.getElementById('in-sec').value.trim();
+  if (v) { addSec(v); closeModal('modal-sec'); document.getElementById('in-sec').value = ''; }
+}
+
+// ── Mobile tabs ───────────────────────────────────────────────────────────────
+function goTab(tab) {
+  document.getElementById('list-panel').classList.toggle('show', tab === 'list');
+  document.getElementById('chat-panel').classList.toggle('show', tab === 'chat');
+  document.getElementById('tab-list').classList.toggle('on', tab === 'list');
+  document.getElementById('tab-chat').classList.toggle('on', tab === 'chat');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+load();
+render();
+
+// Show file:// warning if Google is configured but won't work
+if (location.protocol === 'file:' && S.googleClientId) {
+  document.getElementById('file-warn').style.display = '';
+}
+
+// Init Google UI
+if (S.googleClientId) setGoogleUI('ready');
+updateMemoryBtn();
+
+// If GIS already loaded in cache before this script ran
+if (typeof google !== 'undefined' && google.accounts?.oauth2 && S.googleClientId) {
+  initTokenClient();
+}
+
+// Suggestion chips
+const suggestions = [
+  "What should I tackle first?",
+  "How's my progress looking?",
+  "What might I be forgetting?",
+  "Help me plan this week",
+];
+const chipsEl = document.getElementById('chips');
+for (const s of suggestions) {
+  const btn = document.createElement('button');
+  btn.className = 'chip'; btn.textContent = s;
+  btn.onclick = () => { document.getElementById('chat-in').value = s; send(); };
+  chipsEl.appendChild(btn);
+}
+
+// Header buttons
+document.getElementById('btn-settings').addEventListener('click', () => {
+  document.getElementById('in-key').value       = S.apiKey;
+  document.getElementById('in-gclientid').value = S.googleClientId;
+  document.getElementById('in-sheetid').value   = S.googleSheetId;
+  document.getElementById('in-docid').value     = S.googleDocId;
+  openModal('modal-settings');
+});
+document.getElementById('btn-add-sec').addEventListener('click', () => openModal('modal-sec'));
+document.getElementById('btn-add-sec2').addEventListener('click', () => openModal('modal-sec'));
+
+// Google pill — connect or refresh
+document.getElementById('btn-gpill').addEventListener('click', () => {
+  if (hasToken()) {
+    // Already connected — sync now
+    if (S.googleSheetId) loadFromSheets();
+    if (S.googleDocId) loadDocMemory();
+  } else {
+    connectGoogle();
+  }
+});
+
+// Sync button — manual refresh when already connected
+document.getElementById('btn-sync').addEventListener('click', () => {
+  if (!hasToken()) { connectGoogle(); return; }
+  if (S.googleSheetId) loadFromSheets();
+  if (S.googleDocId) loadDocMemory();
+});
+
+// Memory button
+document.getElementById('btn-mem').addEventListener('click', () => triggerMemoryUpdate());
+
+// Send / chat input
+document.getElementById('send').addEventListener('click', send);
+const chatIn = document.getElementById('chat-in');
+chatIn.addEventListener('input', function() {
+  this.style.height = '';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+  document.getElementById('send').disabled = !this.value.trim() || busy;
+});
+chatIn.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+
+// Modal key handlers
+document.getElementById('in-sec').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doAddSec();
+  if (e.key === 'Escape') closeModal('modal-sec');
+});
+document.getElementById('in-key').addEventListener('keydown', e => {
+  if (e.key === 'Enter') saveSettings();
+  if (e.key === 'Escape') closeModal('modal-settings');
+});
+
+// Backdrop clicks close modals
+document.querySelectorAll('.modal-bg').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// Prompt for API key on first load
+if (!S.apiKey) {
+  setTimeout(() => {
+    openModal('modal-settings');
+    document.getElementById('in-key').focus();
+  }, 600);
+}
+</script>
+
+<script src="https://accounts.google.com/gsi/client" async defer
+        onload="onGisLoaded()" onerror="onGisError()"></script>
+</body>
+</html>
