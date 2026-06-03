@@ -65,34 +65,22 @@ header .spacer { flex: 1; }
 .hbtn:hover { background: var(--surface-2); color: var(--text-1); }
 .hbtn svg { width: 16px; height: 16px; }
 
-/* Google auth pill */
-.g-pill {
+/* Status pill */
+.gh-pill {
   font-size: 11px; font-weight: 600; padding: 4px 10px;
   border-radius: 20px; cursor: pointer; margin-left: 6px;
   border: 1px solid var(--border-2); background: none;
   font-family: inherit; transition: all 0.15s; white-space: nowrap;
-  color: var(--text-3);
+  color: var(--text-3); display: none;
 }
-.g-pill:hover { background: var(--surface-2); color: var(--text-2); }
-.g-pill.connected  { color: var(--success); border-color: rgba(52,211,153,0.3); background: var(--success-dim); }
-.g-pill.needs-auth { color: var(--accent-text); border-color: var(--accent); background: var(--accent-dim); }
-.g-pill.error      { color: var(--danger); border-color: rgba(248,113,113,0.3); }
-.g-pill.syncing    { color: var(--text-2); }
+.gh-pill:hover { background: var(--surface-2); color: var(--text-2); }
+.gh-pill.connected  { color: var(--success); border-color: rgba(52,211,153,0.3); background: var(--success-dim); }
+.gh-pill.error      { color: var(--danger); border-color: rgba(248,113,113,0.3); }
+.gh-pill.syncing    { color: var(--text-2); }
 
 /* Sync spinner */
 @keyframes spin { to { transform: rotate(360deg); } }
 .hbtn.spinning svg { animation: spin 1s linear infinite; }
-
-/* File:// warning */
-#file-warn {
-  background: var(--accent-dim); border-bottom: 1px solid rgba(245,158,11,0.2);
-  padding: 7px 14px; font-size: 12px; color: var(--accent-text);
-  text-align: center; display: none; flex-shrink: 0;
-}
-#file-warn button {
-  background: none; border: none; color: var(--accent-text); cursor: pointer;
-  margin-left: 8px; font-size: 14px; line-height: 1;
-}
 
 /* ── Main layout ── */
 #main { display: flex; flex: 1; overflow: hidden; }
@@ -304,17 +292,9 @@ header .spacer { flex: 1; }
   font-size: 11px; color: var(--text-3); margin-top: 6px; margin-bottom: 2px;
   display: flex; align-items: center; gap: 4px; line-height: 1.5;
 }
-.key-hint a, .settings-note a { color: var(--accent); text-decoration: none; }
-.key-hint a:hover, .settings-note a:hover { text-decoration: underline; }
-
-/* Settings Google section */
+.key-hint a { color: var(--accent); text-decoration: none; }
+.key-hint a:hover { text-decoration: underline; }
 .settings-divider { height: 1px; background: var(--border); margin: 20px 0; }
-.settings-section-label {
-  font-size: 13px; font-weight: 600; color: var(--text-2); margin-bottom: 6px;
-}
-.settings-note {
-  font-size: 12px; color: var(--text-3); line-height: 1.6; margin-bottom: 14px;
-}
 .mt10 { margin-top: 10px; }
 
 /* ── Mobile tabs ── */
@@ -351,9 +331,7 @@ header .spacer { flex: 1; }
       Nudge
     </div>
     <div class="spacer"></div>
-    <button class="g-pill" id="btn-gpill" style="display:none" title="Google sync">
-      Google
-    </button>
+    <button class="gh-pill" id="btn-ghpill" title="GitHub sync status"></button>
     <button class="hbtn" id="btn-sync" style="display:none" title="Sync now">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M14 8A6 6 0 112 8"/><path d="M14 4v4h-4"/>
@@ -366,12 +344,6 @@ header .spacer { flex: 1; }
       <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M2.93 2.93l1.41 1.41M11.66 11.66l1.41 1.41M2.93 13.07l1.41-1.41M11.66 4.34l1.41-1.41" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
     </button>
   </header>
-
-  <!-- file:// protocol warning -->
-  <div id="file-warn">
-    Google OAuth requires HTTP/S — not available over file://. Serve this file from a local or remote server to use Google sync.
-    <button onclick="this.parentElement.style.display='none'">×</button>
-  </div>
 
   <!-- Main -->
   <div id="main">
@@ -403,7 +375,7 @@ header .spacer { flex: 1; }
         </div>
       </div>
       <div id="chat-foot">
-        <textarea id="chat-in" placeholder="Ask anything about your list..." rows="1"></textarea>
+        <textarea id="chat-in" placeholder="Ask anything about your list…" rows="1"></textarea>
         <button id="btn-mem" title="Update memory from this conversation">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="8" cy="7" r="4"/>
@@ -441,35 +413,27 @@ header .spacer { flex: 1; }
 <div class="modal-bg" id="modal-settings">
   <div class="modal">
     <h2>Settings</h2>
-    <p>Your API keys are stored locally on this device and sent directly to the respective APIs.</p>
+    <p>Your keys are stored locally on this device and sent directly to the respective APIs — never to any third-party server.</p>
 
     <div class="flabel">Anthropic API Key</div>
-    <input class="finput" type="password" id="in-key" placeholder="sk-ant-api03-...">
+    <input class="finput" type="password" id="in-key" placeholder="sk-ant-api03-…">
     <div class="key-hint">
       Get a key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
     </div>
 
     <div class="settings-divider"></div>
-    <div class="settings-section-label">Google Integration</div>
-    <p class="settings-note">
-      Syncs your list across devices via Google Sheets and gives Claude persistent memory via Google Docs.
-      Requires this page to be served over HTTP/S — not <code>file://</code>.<br><br>
-      Setup: create a project at <a href="https://console.cloud.google.com" target="_blank">Google Cloud Console</a>,
-      enable the Sheets API and Docs API, create an OAuth 2.0 Web Client ID, and add this page's origin
-      to <em>Authorized JavaScript origins</em>.
-    </p>
 
-    <div class="flabel">Google Client ID</div>
-    <input class="finput" type="text" id="in-gclientid" placeholder="123456789-abc.apps.googleusercontent.com">
-    <div class="key-hint">Cloud Console &rarr; APIs &amp; Services &rarr; Credentials &rarr; OAuth 2.0 Client IDs</div>
+    <div class="flabel">GitHub Personal Access Token</div>
+    <input class="finput" type="password" id="in-pat" placeholder="ghp_…">
+    <div class="key-hint">
+      github.com/settings/tokens → Generate new token (classic) → scope: <b>gist</b>
+    </div>
 
-    <div class="flabel mt10">Google Sheet ID</div>
-    <input class="finput" type="text" id="in-sheetid" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms">
-    <div class="key-hint">From your Sheet URL: /spreadsheets/d/<b>THIS_PART</b>/edit</div>
-
-    <div class="flabel mt10">Google Doc ID (AI Memory)</div>
-    <input class="finput" type="text" id="in-docid" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms">
-    <div class="key-hint">From your Doc URL: /document/d/<b>THIS_PART</b>/edit</div>
+    <div class="flabel mt10">Gist ID</div>
+    <input class="finput" type="text" id="in-gist" placeholder="26d017b0b385dfb45a9bd2ecaabf50ad">
+    <div class="key-hint">
+      From your Gist URL: gist.github.com/username/<b>THIS_PART</b>
+    </div>
 
     <div class="mactions">
       <button class="btn btn-ghost" onclick="closeModal('modal-settings')">Cancel</button>
@@ -484,7 +448,7 @@ header .spacer { flex: 1; }
     <h2>New section</h2>
     <p>Sections keep your list organized. Name it after a project, time period, or category.</p>
     <div class="flabel">Name</div>
-    <input class="finput" type="text" id="in-sec" placeholder="e.g. Easter Sunday">
+    <input class="finput" type="text" id="in-sec" placeholder="e.g. Work, Personal, Weekend">
     <div class="mactions">
       <button class="btn btn-ghost" onclick="closeModal('modal-sec')">Cancel</button>
       <button class="btn btn-primary" onclick="doAddSec()">Add</button>
@@ -493,306 +457,159 @@ header .spacer { flex: 1; }
 </div>
 
 <script>
-// ── State & storage ──────────────────────────────────────────────────────────
-let S = { sections: [], apiKey: '', googleClientId: '', googleSheetId: '', googleDocId: '' };
+// ── State ────────────────────────────────────────────────────────────────────
+let S = { sections: [], apiKey: '', githubPat: '', gistId: '' };
 let history = [];
 let busy = false;
 
-// ── Google runtime state (never persisted) ───────────────────────────────────
 const G = {
-  token: null,        // { access_token, expires_at }
-  tokenClient: null,  // GIS TokenClient
-  memory: '',         // current Doc content
-  memMsgCount: 0,     // messages since last memory write
-  sheetsTimer: null,  // debounce timer for Sheets writes
+  memory: '',
+  memMsgCount: 0,
+  syncTimer: null,
 };
 
+// ── Persistence ───────────────────────────────────────────────────────────────
 function save() {
   localStorage.setItem('nudge2', JSON.stringify(S));
-  scheduleSheetsWrite();
+  scheduleGistWrite();
 }
 
 function load() {
   try { const r = localStorage.getItem('nudge2'); if (r) S = JSON.parse(r); } catch(e) {}
-  S.sections       = S.sections       || [];
-  S.apiKey         = S.apiKey         || '';
-  S.googleClientId = S.googleClientId || '';
-  S.googleSheetId  = S.googleSheetId  || '';
-  S.googleDocId    = S.googleDocId    || '';
+  S.sections  = S.sections  || [];
+  S.apiKey    = S.apiKey    || '';
+  S.githubPat = S.githubPat || '';
+  S.gistId    = S.gistId    || '';
 }
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
-
 function esc(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+function ts() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
 
-function ts() {
-  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+// ── GitHub Gist API ───────────────────────────────────────────────────────────
+function hasGithub() { return !!(S.githubPat && S.gistId); }
+
+async function ghFetch(method, body) {
+  return fetch(`https://api.github.com/gists/${S.gistId}`, {
+    method,
+    headers: {
+      'Authorization': `token ${S.githubPat}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
 }
 
-// ── Google Identity Services (GIS) ───────────────────────────────────────────
-function onGisLoaded() {
-  if (S.googleClientId) initTokenClient();
-}
-
-function onGisError() {
-  console.warn('GIS library failed to load — Google features unavailable');
-  setGoogleUI('error');
-}
-
-function initTokenClient() {
-  if (!S.googleClientId) return;
-  if (typeof google === 'undefined' || !google.accounts?.oauth2) return;
+async function loadFromGist() {
+  if (!hasGithub()) return;
+  setGithubUI('syncing');
   try {
-    G.tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: S.googleClientId,
-      scope: [
-        'https://www.googleapis.com/auth/spreadsheets',
-        'https://www.googleapis.com/auth/documents',
-      ].join(' '),
-      callback: onTokenResponse,
-      error_callback: onTokenError,
-    });
-    setGoogleUI('ready');
+    const res = await ghFetch('GET');
+    if (!res.ok) throw new Error(`${res.status}`);
+    const data = await res.json();
+
+    const todosFile = data.files['nudge-todos.json'];
+    const memFile   = data.files['nudge-memory.txt'];
+
+    if (todosFile?.content) {
+      try {
+        const parsed = JSON.parse(todosFile.content);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          S.sections = parsed;
+          localStorage.setItem('nudge2', JSON.stringify(S));
+          render();
+        }
+      } catch(e) {}
+    }
+
+    if (memFile?.content?.trim()) {
+      G.memory = memFile.content.trim();
+      updateMemoryBtn();
+    }
+
+    setGithubUI('connected');
   } catch(e) {
-    console.error('GIS init failed:', e);
-    setGoogleUI('error');
+    console.error('Gist load failed:', e);
+    setGithubUI('error');
   }
 }
 
-function onTokenResponse(resp) {
-  if (resp.error) { onTokenError(resp); return; }
-  G.token = {
-    access_token: resp.access_token,
-    expires_at: Date.now() + (resp.expires_in * 1000),
-  };
-  setGoogleUI('connected');
-  // Load data from Google now that we have a token
-  if (S.googleSheetId) loadFromSheets();
-  if (S.googleDocId)   loadDocMemory();
-}
-
-function onTokenError(err) {
-  G.token = null;
-  const type = err?.type || '';
-  if (type === 'popup_closed') { setGoogleUI('ready'); return; }
-  setGoogleUI('needs-auth');
-  console.warn('Token error:', type);
-}
-
-function hasToken() {
-  return G.token && Date.now() < G.token.expires_at - 30000;
-}
-
-// Called from user gesture (header pill / sync button clicks)
-function connectGoogle() {
-  if (!S.googleClientId) { openModal('modal-settings'); return; }
-  if (!G.tokenClient) {
-    // GIS might not have loaded yet — try init then retry
-    if (typeof google !== 'undefined' && google.accounts?.oauth2) {
-      initTokenClient();
-    }
-    if (!G.tokenClient) {
-      // Still not available — could be network issue
-      setGoogleUI('error');
-      return;
-    }
-  }
-  setGoogleUI('syncing');
-  G.tokenClient.requestAccessToken({ prompt: '' });
-}
-
-// ── Google API helper ─────────────────────────────────────────────────────────
-async function gFetch(url, opts = {}) {
-  if (!hasToken()) {
-    setGoogleUI('needs-auth');
-    throw new Error('no_token');
-  }
-  const headers = {
-    'Authorization': `Bearer ${G.token.access_token}`,
-    'Content-Type': 'application/json',
-    ...(opts.headers || {}),
-  };
-  const res = await fetch(url, { ...opts, headers });
-  if (res.status === 401) {
-    G.token = null;
-    setGoogleUI('needs-auth');
-    throw new Error('token_expired');
-  }
-  return res;
-}
-
-// ── Google Sheets ─────────────────────────────────────────────────────────────
-// Sheet format (no header row):
-//   SECTION | Work        |
-//   ITEM    | Task text   | FALSE
-//   ITEM    | Done task   | TRUE
-
-function parseSheetRows(rows) {
-  const sections = [];
-  let cur = null;
-  for (const row of (rows || [])) {
-    const type = (row[0] || '').toUpperCase();
-    if (type === 'SECTION' && row[1]) {
-      cur = { id: uid(), title: row[1], items: [] };
-      sections.push(cur);
-    } else if (type === 'ITEM' && cur && row[1]) {
-      cur.items.push({
-        id: uid(),
-        text: row[1],
-        done: (row[2] || '').toUpperCase() === 'TRUE',
-      });
-    }
-  }
-  return sections;
-}
-
-function buildSheetRows() {
-  const rows = [];
-  for (const sec of S.sections) {
-    rows.push(['SECTION', sec.title, '']);
-    for (const item of sec.items) {
-      rows.push(['ITEM', item.text, item.done ? 'TRUE' : 'FALSE']);
-    }
-  }
-  return rows;
-}
-
-async function loadFromSheets() {
-  if (!hasToken() || !S.googleSheetId) return;
+async function doWriteGist() {
+  if (!hasGithub()) return;
   setSyncSpinner(true);
   try {
-    const res = await gFetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${S.googleSheetId}/values/Sheet1`
-    );
-    if (!res.ok) throw new Error(`Sheets ${res.status}`);
-    const data = await res.json();
-    const rows = data.values || [];
-    if (rows.length > 0) {
-      S.sections = parseSheetRows(rows);
-      localStorage.setItem('nudge2', JSON.stringify(S));
-      render();
-    } else {
-      // Sheet is empty — push local data up
-      await doWriteSheets();
-    }
+    const res = await ghFetch('PATCH', {
+      files: { 'nudge-todos.json': { content: JSON.stringify(S.sections, null, 2) } }
+    });
+    if (!res.ok) throw new Error(`${res.status}`);
     setSyncSpinner(false);
-    setGoogleUI('connected');
+    setGithubUI('connected');
   } catch(e) {
     setSyncSpinner(false);
-    if (e.message !== 'no_token' && e.message !== 'token_expired') {
-      setGoogleUI('error');
-      console.error('Sheets load failed:', e);
-    }
+    setGithubUI('error');
+    console.error('Gist write failed:', e);
   }
 }
 
-async function doWriteSheets() {
-  const base = `https://sheets.googleapis.com/v4/spreadsheets/${S.googleSheetId}`;
-  // Clear
-  const clearRes = await gFetch(`${base}/values/Sheet1:clear`, {
-    method: 'POST', body: '{}',
-  });
-  if (!clearRes.ok) throw new Error(`Clear ${clearRes.status}`);
-  // Write
-  const rows = buildSheetRows();
-  if (!rows.length) return;
-  const writeRes = await gFetch(`${base}/values/Sheet1?valueInputOption=RAW`, {
-    method: 'PUT',
-    body: JSON.stringify({ range: 'Sheet1', majorDimension: 'ROWS', values: rows }),
-  });
-  if (!writeRes.ok) throw new Error(`Write ${writeRes.status}`);
+function scheduleGistWrite() {
+  if (!hasGithub()) return;
+  clearTimeout(G.syncTimer);
+  G.syncTimer = setTimeout(doWriteGist, 2000);
 }
 
-function scheduleSheetsWrite() {
-  if (!hasToken() || !S.googleSheetId) return;
-  clearTimeout(G.sheetsTimer);
-  G.sheetsTimer = setTimeout(async () => {
-    setSyncSpinner(true);
-    try {
-      await doWriteSheets();
-      setSyncSpinner(false);
-      setGoogleUI('connected');
-    } catch(e) {
-      setSyncSpinner(false);
-      if (e.message !== 'no_token' && e.message !== 'token_expired') {
-        setGoogleUI('error');
-        console.error('Sheets write failed:', e);
-      }
-    }
-  }, 2000);
-}
-
-// ── Google Docs (memory) ──────────────────────────────────────────────────────
-function extractDocText(doc) {
-  const parts = [];
-  for (const elem of (doc.body?.content || [])) {
-    if (!elem.paragraph) continue;
-    for (const pe of (elem.paragraph.elements || [])) {
-      if (pe.textRun?.content) parts.push(pe.textRun.content);
-    }
-  }
-  return parts.join('').trim();
-}
-
-async function loadDocMemory() {
-  if (!hasToken() || !S.googleDocId) return;
+async function writeMemory(newText) {
+  if (!hasGithub()) return;
   try {
-    const res = await gFetch(`https://docs.googleapis.com/v1/documents/${S.googleDocId}`);
-    if (!res.ok) throw new Error(`Docs ${res.status}`);
-    const doc = await res.json();
-    G.memory = extractDocText(doc);
-    updateMemoryBtn();
-  } catch(e) {
-    if (e.message !== 'no_token' && e.message !== 'token_expired') {
-      console.warn('Doc memory load failed:', e.message);
-    }
-  }
-}
-
-async function writeDocMemory(newText) {
-  if (!hasToken() || !S.googleDocId) return;
-  try {
-    // Read current doc to get endIndex
-    const readRes = await gFetch(`https://docs.googleapis.com/v1/documents/${S.googleDocId}`);
-    if (!readRes.ok) throw new Error(`Docs read ${readRes.status}`);
-    const doc = await readRes.json();
-    const content = doc.body?.content || [];
-    const endIndex = content.at(-1)?.endIndex ?? 1;
-
-    const requests = [];
-    // Delete all existing content (except mandatory trailing newline at endIndex)
-    if (endIndex > 1) {
-      requests.push({
-        deleteContentRange: { range: { startIndex: 1, endIndex: endIndex - 1 } }
-      });
-    }
-    // Insert new content at start
-    if (newText) {
-      requests.push({ insertText: { location: { index: 1 }, text: newText } });
-    }
-
-    if (!requests.length) return;
-
-    const writeRes = await gFetch(
-      `https://docs.googleapis.com/v1/documents/${S.googleDocId}:batchUpdate`,
-      { method: 'POST', body: JSON.stringify({ requests }) }
-    );
-    if (!writeRes.ok) throw new Error(`Docs write ${writeRes.status}`);
+    const res = await ghFetch('PATCH', {
+      files: { 'nudge-memory.txt': { content: newText } }
+    });
+    if (!res.ok) throw new Error(`${res.status}`);
     G.memory = newText;
     updateMemoryBtn();
   } catch(e) {
-    console.warn('Doc memory write failed:', e.message);
+    console.warn('Memory write failed:', e.message);
   }
 }
 
+// ── GitHub UI state ───────────────────────────────────────────────────────────
+function setGithubUI(state) {
+  const pill    = document.getElementById('btn-ghpill');
+  const syncBtn = document.getElementById('btn-sync');
+  if (!pill) return;
+
+  const show = hasGithub();
+  pill.style.display = show ? '' : 'none';
+
+  const labels = {
+    connected: 'GitHub ✓',
+    syncing:   'Syncing…',
+    error:     'Sync Error',
+  };
+  pill.textContent = labels[state] || 'GitHub';
+  pill.className   = `gh-pill ${state}`;
+
+  syncBtn.style.display = (state === 'connected' || state === 'syncing') ? '' : 'none';
+}
+
+function setSyncSpinner(on) {
+  document.getElementById('btn-sync')?.classList.toggle('spinning', on);
+}
+
+function updateMemoryBtn() {
+  const btn = document.getElementById('btn-mem');
+  if (!btn) return;
+  const show = hasGithub();
+  btn.classList.toggle('active', show);
+  btn.classList.toggle('has-memory', show && !!G.memory);
+}
+
+// ── AI memory update ──────────────────────────────────────────────────────────
 async function triggerMemoryUpdate() {
   if (!S.apiKey) { openModal('modal-settings'); return; }
-  if (!S.googleDocId) {
-    openModal('modal-settings');
-    return;
-  }
+  if (!hasGithub()) { openModal('modal-settings'); return; }
 
   const convLines = history.slice(-20).map(m =>
     `${m.role === 'user' ? 'User' : 'Claude'}: ${m.content}`
@@ -814,7 +631,7 @@ Produce an UPDATED MEMORY FILE that captures durable personal context: who the u
 Rules:
 - Maximum 400 words
 - Plain text only — no markdown, no headers
-- Write in second person: "You are...", "The user prefers..."
+- Write in second person: "You are…", "You prefer…"
 - Do NOT transcribe the conversation — only extract facts worth remembering long-term
 - If nothing notable was revealed, return the current memory unchanged
 
@@ -842,13 +659,11 @@ Output only the memory file content, nothing else.`;
       const data = await res.json();
       const newMemory = data.content?.[0]?.text?.trim() || '';
       if (newMemory) {
-        await writeDocMemory(newMemory);
+        await writeMemory(newMemory);
         G.memMsgCount = 0;
-        // Brief visual confirmation on button
         if (memBtn) {
-          const prev = memBtn.style.color;
           memBtn.style.color = 'var(--success)';
-          setTimeout(() => { memBtn.style.color = prev || ''; }, 2000);
+          setTimeout(() => { memBtn.style.color = ''; }, 2000);
         }
       }
     }
@@ -857,44 +672,6 @@ Output only the memory file content, nothing else.`;
   } finally {
     if (memBtn) { memBtn.style.opacity = ''; memBtn.style.pointerEvents = ''; }
   }
-}
-
-// ── Google UI state ───────────────────────────────────────────────────────────
-function setGoogleUI(state) {
-  const pill   = document.getElementById('btn-gpill');
-  const syncBtn = document.getElementById('btn-sync');
-  if (!pill) return;
-
-  const show = !!S.googleClientId;
-  pill.style.display = show ? '' : 'none';
-
-  const labels = {
-    ready:       'Connect Google',
-    connected:   'Google',
-    syncing:     'Syncing…',
-    'needs-auth': 'Reconnect',
-    error:       'Google Error',
-  };
-  pill.textContent = labels[state] || 'Google';
-  pill.className   = `g-pill ${state}`;
-
-  // Show sync button only when connected
-  const showSync = state === 'connected' || state === 'syncing';
-  syncBtn.style.display = showSync ? '' : 'none';
-}
-
-function setSyncSpinner(on) {
-  const syncBtn = document.getElementById('btn-sync');
-  if (!syncBtn) return;
-  syncBtn.classList.toggle('spinning', on);
-}
-
-function updateMemoryBtn() {
-  const btn = document.getElementById('btn-mem');
-  if (!btn) return;
-  const show = !!S.googleDocId;
-  btn.classList.toggle('active', show);
-  btn.classList.toggle('has-memory', show && !!G.memory);
 }
 
 // ── List context for Claude ───────────────────────────────────────────────────
@@ -954,10 +731,10 @@ function renderItem(item) {
 }
 
 function updateStats() {
-  const all = S.sections.flatMap(s => s.items);
+  const all  = S.sections.flatMap(s => s.items);
   const done = all.filter(i => i.done).length;
-  const tot = all.length;
-  document.getElementById('st-tot').textContent = tot;
+  const tot  = all.length;
+  document.getElementById('st-tot').textContent  = tot;
   document.getElementById('st-done').textContent = done;
   document.getElementById('st-left').textContent = tot - done;
   document.getElementById('prog').style.width = (tot ? Math.round(done/tot*100) : 0) + '%';
@@ -1004,22 +781,18 @@ function addBubble(role, text, isLoading) {
   const msgs = document.getElementById('chat-msgs');
   const d = document.createElement('div');
   d.className = `msg ${role === 'user' ? 'u' : 'a'}`;
-  d.innerHTML = `<div class="bubble ${isLoading ? 'loading' : ''}">${role === 'user' ? esc(text) : text}</div><div class="mtime">${ts()}</div>`;
+  d.innerHTML = `<div class="bubble ${isLoading?'loading':''}">${role==='user'?esc(text):text}</div><div class="mtime">${ts()}</div>`;
   msgs.appendChild(d);
   msgs.scrollTop = msgs.scrollHeight;
   return d.querySelector('.bubble');
 }
 
 async function send() {
-  const inp = document.getElementById('chat-in');
+  const inp  = document.getElementById('chat-in');
   const text = inp.value.trim();
   if (!text || busy) return;
 
-  if (!S.apiKey) {
-    openModal('modal-settings');
-    document.getElementById('in-key').focus();
-    return;
-  }
+  if (!S.apiKey) { openModal('modal-settings'); document.getElementById('in-key').focus(); return; }
 
   inp.value = ''; inp.style.height = '';
   busy = true;
@@ -1058,17 +831,14 @@ async function send() {
       throw new Error(err.error?.message || `HTTP ${res.status}`);
     }
 
-    const data = await res.json();
+    const data  = await res.json();
     const reply = data.content?.[0]?.text || '(empty response)';
     bubble.textContent = reply;
     bubble.classList.remove('loading');
     history.push({ role: 'assistant', content: reply });
 
-    // Auto-trigger memory update every 10 assistant messages
     G.memMsgCount++;
-    if (G.memMsgCount >= 10 && S.googleDocId && hasToken()) {
-      triggerMemoryUpdate();
-    }
+    if (G.memMsgCount >= 10 && hasGithub()) triggerMemoryUpdate();
 
   } catch(err) {
     bubble.textContent = `Error: ${err.message}`;
@@ -1082,33 +852,21 @@ async function send() {
 }
 
 // ── Modals ────────────────────────────────────────────────────────────────────
-function openModal(id) { document.getElementById(id).classList.add('open'); }
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 function saveSettings() {
-  const prevClientId = S.googleClientId;
-  S.apiKey         = document.getElementById('in-key').value.trim();
-  S.googleClientId = document.getElementById('in-gclientid').value.trim();
-  S.googleSheetId  = document.getElementById('in-sheetid').value.trim();
-  S.googleDocId    = document.getElementById('in-docid').value.trim();
+  S.apiKey    = document.getElementById('in-key').value.trim();
+  S.githubPat = document.getElementById('in-pat').value.trim();
+  S.gistId    = document.getElementById('in-gist').value.trim();
   localStorage.setItem('nudge2', JSON.stringify(S));
   closeModal('modal-settings');
-
-  // Re-init GIS if client ID changed or was just set
-  if (S.googleClientId !== prevClientId) {
-    G.tokenClient = null;
-    G.token = null;
-  }
-  if (S.googleClientId && typeof google !== 'undefined' && google.accounts?.oauth2) {
-    initTokenClient();
-  }
-
-  setGoogleUI(G.tokenClient ? 'ready' : (S.googleClientId ? 'ready' : ''));
   updateMemoryBtn();
-
-  // Show file:// warning if needed
-  if (location.protocol === 'file:' && S.googleClientId) {
-    document.getElementById('file-warn').style.display = '';
+  if (hasGithub()) {
+    setGithubUI('syncing');
+    loadFromGist();
+  } else {
+    setGithubUI('');
   }
 }
 
@@ -1128,19 +886,11 @@ function goTab(tab) {
 // ── Init ──────────────────────────────────────────────────────────────────────
 load();
 render();
-
-// Show file:// warning if Google is configured but won't work
-if (location.protocol === 'file:' && S.googleClientId) {
-  document.getElementById('file-warn').style.display = '';
-}
-
-// Init Google UI
-if (S.googleClientId) setGoogleUI('ready');
 updateMemoryBtn();
 
-// If GIS already loaded in cache before this script ran
-if (typeof google !== 'undefined' && google.accounts?.oauth2 && S.googleClientId) {
-  initTokenClient();
+if (hasGithub()) {
+  setGithubUI('syncing');
+  loadFromGist();
 }
 
 // Suggestion chips
@@ -1160,34 +910,23 @@ for (const s of suggestions) {
 
 // Header buttons
 document.getElementById('btn-settings').addEventListener('click', () => {
-  document.getElementById('in-key').value       = S.apiKey;
-  document.getElementById('in-gclientid').value = S.googleClientId;
-  document.getElementById('in-sheetid').value   = S.googleSheetId;
-  document.getElementById('in-docid').value     = S.googleDocId;
+  document.getElementById('in-key').value = S.apiKey;
+  document.getElementById('in-pat').value = S.githubPat;
+  document.getElementById('in-gist').value = S.gistId;
   openModal('modal-settings');
 });
-document.getElementById('btn-add-sec').addEventListener('click', () => openModal('modal-sec'));
+document.getElementById('btn-add-sec').addEventListener('click',  () => openModal('modal-sec'));
 document.getElementById('btn-add-sec2').addEventListener('click', () => openModal('modal-sec'));
 
-// Google pill — connect or refresh
-document.getElementById('btn-gpill').addEventListener('click', () => {
-  if (hasToken()) {
-    // Already connected — sync now
-    if (S.googleSheetId) loadFromSheets();
-    if (S.googleDocId) loadDocMemory();
-  } else {
-    connectGoogle();
-  }
+document.getElementById('btn-ghpill').addEventListener('click', () => {
+  if (hasGithub()) loadFromGist();
+  else openModal('modal-settings');
 });
 
-// Sync button — manual refresh when already connected
 document.getElementById('btn-sync').addEventListener('click', () => {
-  if (!hasToken()) { connectGoogle(); return; }
-  if (S.googleSheetId) loadFromSheets();
-  if (S.googleDocId) loadDocMemory();
+  if (hasGithub()) loadFromGist();
 });
 
-// Memory button
 document.getElementById('btn-mem').addEventListener('click', () => triggerMemoryUpdate());
 
 // Send / chat input
@@ -1198,7 +937,9 @@ chatIn.addEventListener('input', function() {
   this.style.height = Math.min(this.scrollHeight, 120) + 'px';
   document.getElementById('send').disabled = !this.value.trim() || busy;
 });
-chatIn.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+chatIn.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+});
 
 // Modal key handlers
 document.getElementById('in-sec').addEventListener('keydown', e => {
@@ -1217,14 +958,8 @@ document.querySelectorAll('.modal-bg').forEach(el => {
 
 // Prompt for API key on first load
 if (!S.apiKey) {
-  setTimeout(() => {
-    openModal('modal-settings');
-    document.getElementById('in-key').focus();
-  }, 600);
+  setTimeout(() => { openModal('modal-settings'); document.getElementById('in-key').focus(); }, 600);
 }
 </script>
-
-<script src="https://accounts.google.com/gsi/client" async defer
-        onload="onGisLoaded()" onerror="onGisError()"></script>
 </body>
 </html>
